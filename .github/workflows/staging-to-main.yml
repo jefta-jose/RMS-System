@@ -5,20 +5,19 @@ on:
     branches:
       - staging
 
+permissions:
+  contents: write
+
 jobs:
   check-merge-approval:
     runs-on: ubuntu-latest
     steps:
       - name: Check if PR was merged by jefta-jose
         run: |
-          # Check if the pull request was merged
           if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
-            # Get the GitHub username of the user who merged the PR
             MERGER_USERNAME="${{ github.event.pull_request.merged_by.login }}"
-
-            # Check if the merger is jefta-jose
             if [[ "$MERGER_USERNAME" == "jefta-jose" ]]; then
-              echo "PR merged by jefta-jose. All good!"
+              echo "PR merged by jefta-jose. Proceeding."
             else
               echo "PR was merged by $MERGER_USERNAME, not jefta-jose. Rejecting."
               exit 1
@@ -39,13 +38,20 @@ jobs:
         run: |
           git fetch --all
 
+      - name: Ensure main is up to date
+        run: |
+          git checkout main
+          git pull origin main --rebase
+
+      - name: Rebase staging onto main
+        run: |
+          git checkout staging
+          git pull origin staging
+          git rebase origin/main
+          git push origin staging --force
+
       - name: Merge staging into main
         run: |
-          git config --global user.name "Github Actions"
-          git config --global user.email "actions@github.com"
           git checkout main
-          git merge origin/staging --no-ff --allow-unrelated-histories -m "Merge staging to main" || {
-            echo "Merge conflict detected! Manual resolution required."
-            exit 1
-          }
+          git merge origin/staging --no-ff -m "Merge staging to main"
           git push origin main
