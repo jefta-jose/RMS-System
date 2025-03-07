@@ -1,0 +1,35 @@
+name: Feature to Staging
+
+on:
+  pull_request:
+    branches:
+      - staging
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-feature-to-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Check for console.log || Console.WriteLine
+        run: |
+          if grep -r -E "console\.log\(|Console\.WriteLine\(" .; then
+            echo "Log Statements found! Failing Test."
+            exit 1
+          else
+            echo "No log statements found! Test Passed."
+          fi
+
+      - name: Check for merge conflicts
+        run: |
+          git fetch origin staging
+          git checkout staging
+          git merge --no-ff --no-commit $GITHUB_HEAD_REF || true
+          if git diff --check --diff-filter=U | grep -q '^'; then
+            echo "Merge conflict detected! Failing Job."
+            exit 1
+          else
+            echo "No Merge Conflicts Found"
+          fi

@@ -1,0 +1,41 @@
+name: Staging to Main
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  require-approval-staging-to-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if staging was approved
+        run: |
+          if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
+            echo "Staging branch approved and ready to merge to main."
+          else 
+            echo "Staging branch not approved or merged yet."
+            exit 1
+          fi
+
+  merge-staging-to-main:
+    needs: require-approval-staging-to-main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Fetch latest changes
+        run: |
+          git fetch --all
+
+      - name: Merge staging into main
+        run: |
+          git config --global user.name "Github Actions"
+          git config --global user.email "actions@github.com"
+          git checkout main
+          git merge origin/staging --no-ff -m "Merge staging to main" || {
+            echo "Merge conflict detected! Manual resolution required."
+            exit 1
+          }
+          git push origin main
