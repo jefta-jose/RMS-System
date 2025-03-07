@@ -6,20 +6,30 @@ on:
       - staging
 
 jobs:
-  require-approval-staging-to-main:
+  check-merge-approval:
     runs-on: ubuntu-latest
     steps:
-      - name: Check if staging was approved
+      - name: Check if PR was merged by jefta-jose
         run: |
+          # Check if the pull request was merged
           if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
-            echo "Staging branch approved and ready to merge to main."
-          else 
-            echo "Staging branch not approved or merged yet."
-            exit 1
+            # Get the GitHub username of the user who merged the PR
+            MERGER_USERNAME="${{ github.event.pull_request.merged_by.login }}"
+
+            # Check if the merger is jefta-jose
+            if [[ "$MERGER_USERNAME" == "jefta-jose" ]]; then
+              echo "PR merged by jefta-jose. All good!"
+            else
+              echo "PR was merged by $MERGER_USERNAME, not jefta-jose. Rejecting."
+              exit 1
+            fi
+          else
+            echo "PR was not merged. Skipping."
+            exit 0
           fi
 
   merge-staging-to-main:
-    needs: require-approval-staging-to-main
+    needs: check-merge-approval
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
