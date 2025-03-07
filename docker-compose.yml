@@ -1,0 +1,13 @@
+name: "fullstack-clone"
+services:
+  db:
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "${DB_PASSWORD}"
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports: 
+      - 14332:1433
+    volumes:
+      - fullstack-clone-storage:/var/opt/mssql
+volumes:
+  fullstack-clone-storage:

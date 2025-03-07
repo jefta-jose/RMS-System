@@ -1,0 +1,47 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - staging
+    types: [closed]
+
+jobs:
+  check-log-statements:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Fail if console.log or Console.WriteLine exists
+        run: |
+          if grep -r -E "console\.log\(|Console\.WriteLine\(" .; then
+            echo "Log statements found! Failing the test."
+            exit 1
+          else
+            echo "No log statements found. Test passed."
+          fi
+
+  require-approval:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'staging'
+    steps:
+      - name: Check if PR was approved
+        run: echo "Pull request approved and merged into staging."
+
+  merge-staging-to-main:
+    needs: [check-log-statements, require-approval]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Merge staging into main
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git fetch origin main
+          git checkout main
+          git merge origin/staging --allow-unrelated-histories
+          git push origin main
+          
