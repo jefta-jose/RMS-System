@@ -33,3 +33,21 @@ jobs:
           else
             echo "No Merge Conflicts Found"
           fi
+
+  check-merge-approval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if PR was merged by jefta-jose
+        run: |
+          if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
+            MERGER_USERNAME="${{ github.event.pull_request.merged_by.login }}"
+            if [[ "$MERGER_USERNAME" == "jefta-jose" ]]; then
+              echo "PR merged by jefta-jose. Proceeding."
+            else
+              echo "PR was merged by $MERGER_USERNAME, not jefta-jose. Rejecting."
+              exit 1
+            fi
+          else
+            echo "PR was not merged. Skipping."
+            exit 0
+          fi
