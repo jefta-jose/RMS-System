@@ -7,9 +7,6 @@ namespace api.Attributes.Rbac
 {
     public interface JsonForbidResult : IActionResult
     {
-        //This code defines a custom IActionResult implementation called JsonForbidResult that returns a JSON response
-        //with a 403 Forbidden status code. This is typically used in ASP.NET Core applications to handle authorization
-        //failures in a more user-friendly way, by returning a structured JSON response instead of a plain text or HTML response.
         public Task ExecutedResultAsync(ActionContext context)
         {
             context.HttpContext.Response.StatusCode = 403;
