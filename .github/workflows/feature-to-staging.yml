@@ -1,13 +1,13 @@
-name: Feature to Staging
+name: Feature to main
 
 on:
   pull_request:
     branches:
-      - staging
+      - main
     types: [opened, synchronize, reopened]
 
 jobs:
-  check-feature-to-staging:
+  check-feature-to-main:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -24,8 +24,8 @@ jobs:
 
       - name: Check for merge conflicts
         run: |
-          git fetch origin staging
-          git checkout staging
+          git fetch origin main
+          git checkout main
           git merge --no-ff --no-commit $GITHUB_HEAD_REF || true
           if git diff --check --diff-filter=U | grep -q '^'; then
             echo "Merge conflict detected! Failing Job."
