@@ -54,6 +54,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="CQRS\Resources\Queries\" />
+    <Folder Include="Repository\Allocation\" />
+    <Folder Include="Repository\Resources\" />
+    <Folder Include="Repository\Project\" />
+    <Folder Include="Repository\RoleManager\Roles\" />
+    <Folder Include="Repository\RoleManager\Permisions\" />
+    <Folder Include="Services\" />
     <Folder Include="wwwroot\logo\" />
   </ItemGroup>
   <ItemGroup>
