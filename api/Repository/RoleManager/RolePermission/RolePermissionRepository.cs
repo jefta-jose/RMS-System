@@ -129,8 +129,11 @@ namespace api.Repository.RoleManager.RolePermission
 
             catch (Exception ex)
             {
-                return PagedResult<List<RolePermissionDto>>.Failed(System.Net.HttpStatusCode.InternalServerError, ex.Message, ex.InnerException?.Message,
-                    "An error occured while processing your request");
+                var trace = filter.Trace
+                    ? $"\nStackTrace: {ex.StackTrace}\nInnerException: {ex.InnerException?.Message ?? "None"}"
+                    : string.Empty;
+
+                return PagedResult<List<RolePermissionDto>>.Failed(System.Net.HttpStatusCode.InternalServerError, "An error occured while processing you request", trace);
             }
         }
     }
