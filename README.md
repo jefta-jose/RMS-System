@@ -9,5 +9,6 @@ authentication helpers -> claims principal
 DateTime helpers
 Pagination and results filters
 Object Comparers for updating
+cache
 
 Roles and RolesPermission services

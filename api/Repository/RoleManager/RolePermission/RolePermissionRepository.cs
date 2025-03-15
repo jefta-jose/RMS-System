@@ -10,14 +10,9 @@ using System.Threading.Tasks;
 
 namespace api.Repository.RoleManager.RolePermission
 {
-    public class RolePermissionRepository : IRolePermissionRepository
+    public class RolePermissionRepository(RmsDbContext context) : IRolePermissionRepository
     {
-        private readonly RmsDbContext _context;
-
-        public RolePermissionRepository(RmsDbContext context)
-        {
-            _context = context;
-        }
+        private readonly RmsDbContext _context = context;
 
         public async Task<Result<List<RolePermissionDto>>> BulkAssignPermissionToRoleAsync(List<RolePermissionDto> userRole, long userId)
         {

@@ -21,20 +21,13 @@ using static api.Helpers.AuthenticatedHelper;
 
 namespace api.Repository.RoleManager.Roles
 {
-    public class RoleRepository : IRoleRepository
+    public class RoleRepository(RmsDbContext context, IHttpContextAccessor httpContextAccessor) : IRoleRepository
     {
-        public readonly RmsDbContext _context;
+        public readonly RmsDbContext _context = context;
 
         //the httpcontext accessor is uesed to access req,res outside of a controller -> can provide headers,cookies,session data and user claims
-        private IHttpContextAccessor _httpContextAccessor;
+        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
         private readonly AuthenticatedUser _authUser;
-
-        public RoleRepository(RmsDbContext context, IHttpContextAccessor httpContextAccessor)
-        {
-            _context = context;
-            _httpContextAccessor = httpContextAccessor;
-            _authUser = _httpContextAccessor.HttpContext.Items["authenticatedUser"] as AuthenticatedUser;
-        }
 
         public async Task<Result<RoleDto>> CreateRoleAsync(RoleDto role, long userId)
         {
