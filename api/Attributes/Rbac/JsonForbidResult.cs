@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace api.Attributes.Rbac
 {
-    public interface JsonForbidResult : IActionResult
+    public class JsonForbidResult : IActionResult
     {
-        public Task ExecutedResultAsync(ActionContext context)
+        public Task ExecuteResultAsync(ActionContext context)
         {
             context.HttpContext.Response.StatusCode = 403;
             context.HttpContext.Response.ContentType = "application/json";

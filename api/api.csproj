@@ -57,9 +57,6 @@
     <Folder Include="Repository\Allocation\" />
     <Folder Include="Repository\Resources\" />
     <Folder Include="Repository\Project\" />
-    <Folder Include="Services\RoleManager\Roles\" />
-    <Folder Include="Services\RoleManager\RolePermission\" />
-    <Folder Include="Services\RoleManager\Permissions\" />
     <Folder Include="wwwroot\logo\" />
   </ItemGroup>
   <ItemGroup>

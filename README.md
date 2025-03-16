@@ -10,5 +10,6 @@ DateTime helpers
 Pagination and results filters
 Object Comparers for updating
 cache
+authorization policies
 
 Roles and RolesPermission services
