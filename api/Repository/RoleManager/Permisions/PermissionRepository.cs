@@ -1,15 +1,16 @@
 ﻿using api.Data;
 using api.DTO;
 using api.DTO.Role;
+using api.Helpers;
 using api.Helpers.ActivityLog;
 using api.Helpers.Enum;
 using api.Helpers.Filter;
+using api.Models.Roles;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using static api.Helpers.AuthenticatedHelper;
@@ -23,9 +24,39 @@ namespace api.Repository.RoleManager.Permisions
         private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
         private readonly AuthenticatedUser _authUser = authenticatedUser;
 
-        public Task<Result<PermissionDto>> CreatePermissionAsync(PermissionDto permission)
+        public async Task<Result<PermissionDto>> CreatePermissionAsync(PermissionDto permission, long userId)
         {
-            throw new System.NotImplementedException();
+            try
+            {
+                Permission newPermission = new()
+                {
+                    Id = permission.Id,
+                    Name = permission.Name,
+                    Group = permission.Group,
+                    DisplayName = permission.DisplayName,
+                    Slug = permission.Name.ToLower().Replace(" ", "-"),
+                    Description = permission.Description,
+                    Status = permission.Status,
+                    CreatedBy = userId,
+                    CreatedAt = DateTime.Now
+                };
+
+                ActivityLogHelper.AddActivityLog(new DTO.ActivityLog.ActivityLogDto
+                {
+                    ActivityType = Constants.GetEnumMemberValue(Constants.ActivityType.Create),
+                    Description = _authUser + "created permission" + permission.DisplayName
+                },_context, _httpContextAccessor);
+
+                await _context.Permissions.AddAsync(newPermission);
+                await _context.SaveChangesAsync();
+
+                return Result<PermissionDto>.Success(System.Net.HttpStatusCode.OK, permission, "you have successfully created a new permission");
+            }
+
+            catch(Exception ex)
+            {
+                return Result<PermissionDto>.Failed(System.Net.HttpStatusCode.OK, ex.Message, "there was a problem processing your request");
+            }
         }
 
         public async Task<Result<PermissionDto>> DeletePermissionAsync(int id)
@@ -48,7 +79,7 @@ namespace api.Repository.RoleManager.Permisions
                 _context.Permissions.Remove(permission);
                 await _context.SaveChangesAsync();
 
-                return Result<PermissionDto>.Success(System.Net.HttpStatusCode.OK, null, "permission deleted successfully";
+                return Result<PermissionDto>.Success(System.Net.HttpStatusCode.OK, null, "permission deleted successfully");
             }
 
             catch(Exception ex)
@@ -57,14 +88,62 @@ namespace api.Repository.RoleManager.Permisions
             }
         }
 
-        public Task<Result<List<PermissionDto>>> GetAllPermissionsAsync()
+        public async Task<Result<List<PermissionDto>>> GetAllPermissionsAsync()
         {
-            throw new System.NotImplementedException();
+            var cacheKey = $"PermissionsByRole:{DateTime.Now.Day}";
+
+            if (_memoryCache.TryGetValue(cacheKey, out List<PermissionDto> permissions))
+            {
+                return Result<List<PermissionDto>>.Success(System.Net.HttpStatusCode.OK, permissions);
+            }
+
+            List<PermissionDto> result = await _context.Permissions
+                .AsNoTracking()
+                .Select(permission => new PermissionDto
+                {
+                    Id = permission.Id,
+                    Name = permission.Name,
+                    Group = permission.Group,
+                    DisplayName = permission.DisplayName,
+                    Status = permission.Status,
+                    Slug = permission.Slug,
+                    Description = permission.Description
+                }).ToListAsync();
+
+            _memoryCache.Set(cacheKey, result, TimeSpan.FromSeconds(30));
+
+            return Result<List<PermissionDto>>.Success(System.Net.HttpStatusCode.OK, result);
         }
 
-        public Task<Result<PermissionDto>> GetPermissionByIdAsync(int id)
+        public async Task<Result<PermissionDto>> GetPermissionByIdAsync(int id)
         {
-            throw new System.NotImplementedException();
+            try
+            {
+                var permission = await _context.Permissions.FindAsync(id);
+
+                if(permission == null)
+                {
+                    return Result<PermissionDto>.Failed(System.Net.HttpStatusCode.NotFound, null, null, "Permission not found");
+                }
+
+                PermissionDto result = new()
+                {
+                    Id = permission.Id,
+                    Name = permission.Name,
+                    Group = permission.Group,
+                    DisplayName = permission.DisplayName,
+                    Status = permission.Status,
+                    Slug = permission.Slug,
+                    Description = permission.Description,
+                };
+
+                return Result<PermissionDto>.Success(System.Net.HttpStatusCode.OK, result, "results found successfully");
+            }
+
+            catch(Exception ex)
+            {
+                return Result<PermissionDto>.Failed(System.Net.HttpStatusCode.InternalServerError, ex.Message, "There was an error processing your request");
+            }
         }
 
         public async Task<PagedResult<List<PermissionDto>>> GetPermissionsAsync(PaginationFilter filter)
@@ -118,9 +197,56 @@ namespace api.Repository.RoleManager.Permisions
             return userRolePermission.Count != 0;
         }
 
-        public Task<Result<PermissionDto>> UpdatePermissionAsync(PermissionDto permission)
+        public async Task<Result<PermissionDto>> UpdatePermissionAsync(PermissionDto permission, long userId)
         {
-            throw new System.NotImplementedException();
+            try
+            {
+                var existingPermission = await _context.Permissions.FindAsync(permission.Id);
+
+                if(existingPermission == null)
+                {
+                    return Result<PermissionDto>.Failed(System.Net.HttpStatusCode.NotFound, null, "permssion not found");
+                }
+
+                Permission p = new()
+                {
+                    Name = existingPermission.Name,
+                    Status = existingPermission.Status,
+                    DisplayName = existingPermission.DisplayName,
+                    Group = existingPermission.Group,
+                    Description = existingPermission.Description
+                };
+
+                existingPermission.Name = permission.Name;
+                existingPermission.Group = permission.Group;
+                existingPermission.DisplayName = permission.DisplayName;
+                existingPermission.Status = permission.Status;
+                existingPermission.Description = permission.Description;
+
+                _context.Permissions.Update(existingPermission);
+
+                Dictionary<string, string> changedFields = ObjectComparer.GetChangedFields(p, existingPermission, new List<string> { "Name", "DisplayName", "Description", "Status", "Group" });
+                
+                if(!string.IsNullOrWhiteSpace(changedFields["oldValue"]) || !string.IsNullOrWhiteSpace(changedFields["newValue"]))
+                {
+                    ActivityLogHelper.AddActivityLog(new DTO.ActivityLog.ActivityLogDto
+                    {
+                        ActivityType = Constants.GetEnumMemberValue(Constants.ActivityType.Update),
+                        OldValue = changedFields["oldValue"],
+                        NewValue = changedFields["newValue"],
+                        Description = _authUser + "updated permission" + existingPermission.DisplayName
+                    }, _context, _httpContextAccessor);
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Result<PermissionDto>.Success(System.Net.HttpStatusCode.OK, permission, "Permission updated successfully");
+            }
+
+            catch(Exception ex)
+            {
+                return Result<PermissionDto>.Failed(System.Net.HttpStatusCode.InternalServerError, ex.Message, "there was a problem processing your request");
+            }
         }
     }
 }
