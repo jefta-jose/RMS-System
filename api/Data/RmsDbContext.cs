@@ -4,19 +4,22 @@ using api.Models.Navbar;
 using api.Models.Roles;
 using api.Models;
 using Microsoft.EntityFrameworkCore;
+using api.Data.EntityConfigs.Customer;
+using api.Data.EntityConfigs.Email;
+using api.Data.EntityConfigs.Intacct;
+using api.Data.EntityConfigs.NavbarMenu;
+using api.Data.EntityConfigs.ProjectHealthConfig;
+using api.Data.EntityConfigs.Role;
+using api.Data.EntityConfigs;
+using api.EF.EntityConfigs;
+using System;
 
 namespace api.Data
 {
     public class RmsDbContext : DbContext
     {
         public RmsDbContext(DbContextOptions options) : base(options)
-        {
-        }
-
-        protected RmsDbContext()
-        {
-        }
-
+        {}
         public virtual DbSet<UserRole> UserRoles { get; set; }
         public virtual DbSet<Customer> Customers { get; set; }
         public virtual DbSet<Project> Projects { get; set; }
@@ -51,5 +54,45 @@ namespace api.Data
         public virtual DbSet<RolePermission> RolePermissions { get; set; }
         public virtual DbSet<EmailConfiguration> EmailConfigurations { get; set; }
         public virtual DbSet<NavbarMenu> NavbarMenus { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyConfiguration(new UserConfig());
+            modelBuilder.ApplyConfiguration(new ResourceConfig());
+            modelBuilder.ApplyConfiguration(new LocationConfig());
+            modelBuilder.ApplyConfiguration(new ProjectConfig());
+            modelBuilder.ApplyConfiguration(new CustomerConfig());
+            modelBuilder.ApplyConfiguration(new ProjectResourceTypeConfig());
+            modelBuilder.ApplyConfiguration(new ResourceTypeConfig());
+            modelBuilder.ApplyConfiguration(new EmployeeTypeConfig());
+            modelBuilder.ApplyConfiguration(new EarningTypeConfig());
+            modelBuilder.ApplyConfiguration(new ResourceLocationConfig());
+            modelBuilder.ApplyConfiguration(new ProjectResourceConfig());
+            modelBuilder.ApplyConfiguration(new StatusGroupConfig());
+            modelBuilder.ApplyConfiguration(new StatusConfig());
+            modelBuilder.ApplyConfiguration(new UserLocationConfig());
+            modelBuilder.ApplyConfiguration(new UserSolutionDeliveryLeaderConfig());
+            modelBuilder.ApplyConfiguration(new UserRoleConfig());
+            modelBuilder.ApplyConfiguration(new UserRoleLocationConfig());
+            modelBuilder.ApplyConfiguration(new UserRoleSolutionDeliveryLeaderConfig());
+            modelBuilder.ApplyConfiguration(new UserPreferenceConfig());
+            modelBuilder.ApplyConfiguration(new AllocationConfig());
+            modelBuilder.ApplyConfiguration(new SolutionDeliveryLeaderConfig());
+            modelBuilder.ApplyConfiguration(new IntacctTimesheetConfig());
+            modelBuilder.ApplyConfiguration(new TempalteConfig());
+            modelBuilder.ApplyConfiguration(new CustomerSdlConfig());
+            modelBuilder.ApplyConfiguration(new ActivityLogConfig());
+            modelBuilder.ApplyConfiguration(new RefreshTokenConfig());
+            modelBuilder.ApplyConfiguration(new ProjectHealthConfig());
+            modelBuilder.ApplyConfiguration(new RoleConfig());
+            modelBuilder.ApplyConfiguration(new RolePermissionConfig());
+            modelBuilder.ApplyConfiguration(new PermissionConfig());
+            modelBuilder.ApplyConfiguration(new EmailConfigurationConfig());
+            modelBuilder.ApplyConfiguration(new NavbarMenuConfig());
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+            => optionsBuilder.LogTo(Console.WriteLine);
     }
 }
